@@ -74,6 +74,23 @@
     </div>
   </div>
 
+  <!-- ═══ 景気の四季 ═══ -->
+  <div class="card">
+    <div class="card-title">🗾 景気の四季 <span class="badge badge-daily">現在地</span></div>
+    <div id="seasonDisplay" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div style="font-size:48px;line-height:1" id="seasonEmoji">🍂</div>
+      <div>
+        <div style="font-size:18px;font-weight:600" id="seasonName">—</div>
+        <div style="font-size:13px;color:var(--ink-secondary);margin-top:4px" id="seasonDesc">—</div>
+      </div>
+      <div style="margin-left:auto;text-align:right;font-size:11px;color:var(--ink-muted)">
+        <div>長短金利差 <span id="seasonTS">—</span></div>
+        <div>社債スプレッド <span id="seasonCS">—</span></div>
+        <div>景気後退 <span id="seasonRec">—</span></div>
+      </div>
+    </div>
+  </div>
+
   <!-- US Term Spread -->
   <div class="card">
     <div class="card-title">US 長短金利差（イールドカーブ） <span class="badge badge-daily">日次</span></div>
@@ -268,6 +285,39 @@ function updateAll() {
   document.getElementById('dataCount').textContent =
     `${D.history.termSpread.dates.length.toLocaleString()}点 (T10Y2Y)`;
 
+  // ── 景気の四季 ──
+  const usrec = D.history.usrec;
+  let inRecession = false;
+  if (usrec && usrec.dates) {
+    const todayStr = D.updated;
+    for (let i = usrec.dates.length - 1; i >= 0; i--) {
+      if (usrec.dates[i] <= todayStr) {
+        inRecession = usrec.values[i] === 1;
+        break;
+      }
+    }
+  }
+  let seasonEmoji, seasonName, seasonDesc;
+  if (inRecession || ts < 0) {
+    seasonEmoji = '❄️'; seasonName = '冬'; seasonDesc = '景気後退局面。金利低下・逆イールド。';
+  } else if (ts < 0.5) {
+    if (cs > 2.0) {
+      seasonEmoji = '🍂'; seasonName = '秋（警戒）'; seasonDesc = 'フラット化＋社債拡大。クレジットリスクに注意。';
+    } else {
+      seasonEmoji = '🌾'; seasonName = '秋'; seasonDesc = 'サイクル後期。イールドフラット。転換点を注視。';
+    }
+  } else if (ts < 1.5) {
+    seasonEmoji = '☀️'; seasonName = '夏'; seasonDesc = '景気拡大期。順イールド。金利は中位。';
+  } else {
+    seasonEmoji = '🌸'; seasonName = '春'; seasonDesc = '回復期。スティープカーブ。低金利からの立ち上がり。';
+  }
+  document.getElementById('seasonEmoji').textContent = seasonEmoji;
+  document.getElementById('seasonName').textContent = seasonName;
+  document.getElementById('seasonDesc').textContent = seasonDesc;
+  document.getElementById('seasonTS').textContent = fmt(ts,2) + '%';
+  document.getElementById('seasonCS').textContent = fmt(cs,2) + '%';
+  document.getElementById('seasonRec').textContent = inRecession ? '⚠ 後退中' : '✓ 拡大中';
+
   // Build/rebuild charts
   buildCharts();
 
@@ -378,10 +428,40 @@ function buildChart(canvasId, prefix, data, color, unit) {
           grid: { color: '#1a1d28' },
         }
       }
-    }
-  });
+      },
+      plugins: [{
+      id: 'recessionBands',
+      afterDraw: function(chart) {
+        const usrec = KINRI && KINRI.history && KINRI.history.usrec;
+        if (!usrec || !usrec.dates || chart.scales.x.min === undefined) return;
+        const ctx = chart.ctx;
+        const xScale = chart.scales.x;
+        const yScale = chart.scales.y;
+        const visMin = xScale.min;
+        const visMax = xScale.max;
+        let recStart = null;
+        for (let i = 0; i < usrec.dates.length; i++) {
+          const d = new Date(usrec.dates[i] + 'T00:00:00').getTime();
+          if (usrec.values[i] === 1) {
+            if (recStart === null) recStart = d;
+          } else {
+            if (recStart !== null) {
+              const end = d;
+              if (end > visMin && recStart < visMax) {
+                const x1 = xScale.getPixelForValue(Math.max(recStart, visMin));
+                const x2 = xScale.getPixelForValue(Math.min(end, visMax));
+                ctx.fillStyle = 'rgba(248, 113, 113, 0.06)';
+                ctx.fillRect(x1, yScale.top, x2 - x1, yScale.bottom - yScale.top);
+              }
+              recStart = null;
+            }
+          }
+        }
+      }
+      }]
+      });
 
-  charts[prefix] = ch;
+      charts[prefix] = ch;
 }
 
 // ═══════════════════════════════════
