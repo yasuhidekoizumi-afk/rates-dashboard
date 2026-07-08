@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>金利指標ダッシュボード</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d28; --surface2: #222639;
+    --border: #2d3248; --ink: #e8eaed; --ink-secondary: #9aa0b0;
+    --ink-muted: #6b7280; --green: #34d399; --green-bg: rgba(52,211,153,0.12);
+    --amber: #fbbf24; --amber-bg: rgba(251,191,36,0.12);
+    --red: #f87171; --red-bg: rgba(248,113,113,0.12);
+    --blue: #60a5fa; --blue-bg: rgba(96,165,250,0.1);
+    --font: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    --mono: 'SF Mono', 'JetBrains Mono', monospace;
+    --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--font); padding:24px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+  .container { max-width:980px; margin:0 auto; }
+  .header { text-align:center; margin-bottom:24px; }
+  .header h1 { font-size:20px; font-weight:600; background:linear-gradient(135deg,var(--ink),var(--ink-secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .header .sub { font-size:12px; color:var(--ink-muted); margin-top:4px; }
+  .header .meta { font-size:12px; color:var(--ink-secondary); margin-top:8px; font-family:var(--mono); display:flex; justify-content:center; gap:20px; flex-wrap:wrap; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px 24px; margin-bottom:16px; }
+  .card-title { font-size:13px; font-weight:600; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .badge { font-size:9px; font-weight:500; padding:2px 8px; border-radius:999px; text-transform:none; letter-spacing:0; }
+  .badge-daily { background:var(--blue-bg); color:var(--blue); }
+  .badge-monthly { background:var(--amber-bg); color:var(--amber); }
+  .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; margin-bottom:12px; }
+  .metric { padding:8px 0; }
+  .metric-label { font-size:11px; color:var(--ink-muted); }
+  .metric-value { font-size:18px; font-weight:600; font-family:var(--mono); }
+  .metric-date { font-size:9px; color:var(--ink-muted); font-family:var(--mono); }
+  .spread-row { background:var(--surface2); border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .spread-label { font-size:13px; font-weight:600; }
+  .spread-value { font-size:22px; font-weight:700; font-family:var(--mono); }
+  .spread-signal { font-size:11px; font-weight:500; padding:3px 10px; border-radius:999px; white-space:nowrap; }
+  .signal-normal { background:var(--green-bg); color:var(--green); }
+  .signal-warn { background:var(--amber-bg); color:var(--amber); }
+  .signal-danger { background:var(--red-bg); color:var(--red); }
+  .chart-box { margin-top:4px; }
+  .chart-box canvas { width:100% !important; max-height:300px; }
+  .chart-controls { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; align-items:center; }
+  .chart-controls button { background:var(--surface2); border:1px solid var(--border); color:var(--ink-secondary); padding:4px 12px; border-radius:6px; font-size:11px; font-family:var(--font); cursor:pointer; transition:all .15s; }
+  .chart-controls button:hover { background:var(--border); color:var(--ink); }
+  .chart-controls button.active { background:var(--blue-bg); border-color:var(--blue); color:var(--blue); }
+  .chart-controls input[type="date"] { background:var(--surface2); border:1px solid var(--border); color:var(--ink); padding:4px 8px; border-radius:6px; font-size:11px; font-family:var(--mono); }
+  .chart-controls label { font-size:11px; color:var(--ink-muted); margin:0 2px; }
+  .refresh-bar { display:flex; align-items:center; justify-content:center; gap:12px; padding:8px 0; font-size:12px; color:var(--ink-muted); }
+  .refresh-bar button { background:var(--surface2); border:1px solid var(--border); color:var(--ink-secondary); padding:4px 14px; border-radius:6px; font-size:11px; cursor:pointer; font-family:var(--font); }
+  .refresh-bar button:hover { background:var(--border); color:var(--ink); }
+  .refresh-bar .status { color:var(--green); }
+  .summary-item { display:flex; align-items:center; gap:10px; padding:5px 0; font-size:13px; }
+  .summary-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .dot-green { background:var(--green); } .dot-amber { background:var(--amber); } .dot-red { background:var(--red); }
+  .footer { text-align:center; font-size:11px; color:var(--ink-muted); margin-top:24px; padding-top:16px; border-top:1px solid var(--border); }
+  @media (max-width:600px) { body { padding:12px; } .card { padding:16px; } .metric-value { font-size:16px; } .spread-value { font-size:18px; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>📊 金利指標ダッシュボード</h1>
+    <div class="sub">堀井正孝『金利を見れば投資はうまくいく』 — 長短金利差・社債スプレッド</div>
+    <div class="meta">
+      <span>🔄 最終更新: <span id="updateTime">-</span></span>
+      <span id="pollStatus">⏳ ポーリング待機中</span>
+      <span>📊 <span id="dataCount">-</span></span>
+    </div>
+  </div>
+
+  <!-- US Term Spread -->
+  <div class="card">
+    <div class="card-title">US 長短金利差（イールドカーブ） <span class="badge badge-daily">日次</span></div>
+    <div class="metrics" id="termMetrics"></div>
+    <div class="spread-row" id="termSpread"></div>
+    <div class="chart-box">
+      <div class="chart-controls" id="termControls">
+        <button data-range="1m">1ヶ月</button>
+        <button data-range="3m">3ヶ月</button>
+        <button data-range="1y">1年</button>
+        <button data-range="5y" class="active">5年</button>
+        <button data-range="all">全期間</button>
+        <label>From</label><input type="date" id="termFrom">
+        <label>To</label><input type="date" id="termTo">
+      </div>
+      <canvas id="termChart"></canvas>
+    </div>
+  </div>
+
+  <!-- US Credit Spread -->
+  <div class="card">
+    <div class="card-title">US 社債スプレッド（信用サイクル） <span class="badge badge-daily">日次</span></div>
+    <div class="metrics" id="creditMetrics"></div>
+    <div class="spread-row" id="creditSpread"></div>
+    <div class="chart-box">
+      <div class="chart-controls" id="creditControls">
+        <button data-range="1m">1ヶ月</button>
+        <button data-range="3m">3ヶ月</button>
+        <button data-range="1y">1年</button>
+        <button data-range="5y" class="active">5年</button>
+        <button data-range="all">全期間</button>
+        <label>From</label><input type="date" id="creditFrom">
+        <label>To</label><input type="date" id="creditTo">
+      </div>
+      <canvas id="creditChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Japan -->
+  <div class="card">
+    <div class="card-title">日本（月次データ） <span class="badge badge-monthly">月次</span></div>
+    <div class="metrics" id="jpMetrics"></div>
+    <div class="spread-row" id="jpSpread"></div>
+    <div class="chart-box">
+      <div class="chart-controls" id="jpControls">
+        <button data-range="1y">1年</button>
+        <button data-range="5y" class="active">5年</button>
+        <button data-range="10y">10年</button>
+        <button data-range="all">全期間</button>
+        <label>From</label><input type="date" id="jpFrom">
+        <label>To</label><input type="date" id="jpTo">
+      </div>
+      <canvas id="jpChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="card">
+    <div class="card-title">サマリー</div>
+    <div id="summaryItems"></div>
+  </div>
+
+  <div class="refresh-bar">
+    <span>🔄</span>
+    <span id="statusText">待機中</span>
+    <button onclick="manualRefresh()">今すぐ更新</button>
+  </div>
+
+  <div class="footer">
+    出典: FRED (St. Louis Fed) / Yahoo Finance ｜
+    <code>kinri-data.js</code> を cron で毎朝7時更新 ｜
+    ブラウザは5分ごとにポーリング
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+// データローダー
+// ═══════════════════════════════════
+let KINRI = null;
+let charts = { term: null, credit: null, jp: null };
+
+function loadData(callback) {
+  const s = document.createElement('script');
+  s.src = 'kinri-data.js?_=' + Date.now();
+  s.onload = () => {
+    KINRI = window.KINRI_DATA;
+    if (callback) callback();
+  };
+  s.onerror = () => {
+    document.getElementById('statusText').textContent = '❌ データ読み込み失敗';
+    document.getElementById('pollStatus').textContent = '❌ エラー';
+  };
+  document.head.appendChild(s);
+}
+
+// ═══════════════════════════════════
+// 日付フィルター
+// ═══════════════════════════════════
+function dateRange(range) {
+  const now = new Date();
+  const end = now;
+  let start;
+  switch (range) {
+    case '1m':  start = new Date(now); start.setMonth(now.getMonth()-1); break;
+    case '3m':  start = new Date(now); start.setMonth(now.getMonth()-3); break;
+    case '6m':  start = new Date(now); start.setMonth(now.getMonth()-6); break;
+    case '1y':  start = new Date(now); start.setFullYear(now.getFullYear()-1); break;
+    case '5y':  start = new Date(now); start.setFullYear(now.getFullYear()-5); break;
+    case '10y': start = new Date(now); start.setFullYear(now.getFullYear()-10); break;
+    case 'all': return { start: null, end: null };
+    default:    return { start: null, end: null };
+  }
+  return { start, end };
+}
+
+// ═══════════════════════════════════
+// レンダリング
+// ═══════════════════════════════════
+function fmt(v, d) { return (v >= 0 ? '+' : '') + v.toFixed(d); }
+
+function renderMetrics(containerId, items) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = items.map(it =>
+    `<div class="metric">
+      <div class="metric-label">${it.label}</div>
+      <div><span class="metric-value">${it.value}</span> <span class="metric-date">${it.date||''}</span></div>
+    </div>`
+  ).join('');
+}
+
+function renderSpread(containerId, label, value, signalClass, signalLabel) {
+  document.getElementById(containerId).innerHTML =
+    `<span class="spread-label">${label}</span>
+     <div style="display:flex;align-items:center;gap:12px">
+       <span class="spread-value">${value}</span>
+       <span class="spread-signal ${signalClass}">${signalLabel}</span>
+     </div>`;
+}
+
+function updateAll() {
+  if (!KINRI) return;
+  const D = KINRI;
+  document.getElementById('updateTime').textContent = D.updated;
+
+  const ts = D.current.termSpread.value;
+  const cs = D.current.creditSpread.value;
+  const y10 = D.current.dgs10.value;
+  const y2 = D.current.dgs2.value;
+  const ff = D.current.fedfunds.value;
+  const be = D.current.bei.value;
+  const j10 = D.current.jp10.value;
+  const jc = D.current.jpcall.value;
+  const jt = j10 - jc;
+  const baa_y = y10 + cs;
+
+  // US term spread metrics
+  renderMetrics('termMetrics', [
+    { label: '10年国債利回り', value: y10.toFixed(3) + '%', date: D.current.dgs10.date },
+    { label: '2年国債利回り', value: y2.toFixed(3) + '%', date: D.current.dgs2.date },
+    { label: 'FFレート', value: ff.toFixed(3) + '%', date: D.current.fedfunds.date },
+  ]);
+  const tsCls = ts < 0 ? 'signal-danger' : ts < 0.5 ? 'signal-warn' : 'signal-normal';
+  const tsLbl = ts < 0 ? '⚠ 逆イールド' : ts < 0.5 ? '▸ フラット（注視）' : '✓ 順イールド';
+  renderSpread('termSpread', '長短金利差 (10yr−2yr)', fmt(ts,3) + '%', tsCls, tsLbl);
+
+  // Credit spread metrics
+  renderMetrics('creditMetrics', [
+    { label: "Moody's Baa 社債利回り", value: baa_y.toFixed(2) + '%', date: D.current.creditSpread.date },
+    { label: '10年国債利回り', value: y10.toFixed(3) + '%', date: D.current.dgs10.date },
+  ]);
+  const csCls = cs > 3.0 ? 'signal-danger' : cs > 2.0 ? 'signal-warn' : 'signal-normal';
+  const csLbl = cs > 3.0 ? '⚠⚠ クレジットストレス' : cs > 2.0 ? '⚠ やや拡大' : '✓ 平常範囲';
+  renderSpread('creditSpread', '社債スプレッド (Baa−10yr)', fmt(cs,2) + '%', csCls, csLbl);
+
+  // Japan
+  renderMetrics('jpMetrics', [
+    { label: '10年国債利回り', value: j10.toFixed(3) + '%', date: D.current.jp10.date },
+    { label: 'コールレート', value: jc.toFixed(3) + '%', date: D.current.jpcall.date },
+  ]);
+  renderSpread('jpSpread', '長短金利差 (10yr−コール)', fmt(jt,3) + '%',
+    jt > 0 ? 'signal-normal' : 'signal-danger',
+    jt > 0 ? '✓ 順イールド' : '⚠ 逆イールド');
+
+  // Summary
+  document.getElementById('summaryItems').innerHTML = `
+    <div class="summary-item"><span class="summary-dot ${ts < 0.5 ? 'dot-amber' : 'dot-green'}"></span>US 長短金利差: ${fmt(ts,2)} — ${ts < 0 ? '逆イールド 警戒' : ts < 0.5 ? 'フラット サイクル後期' : '順イールド 正常'}</div>
+    <div class="summary-item"><span class="summary-dot ${cs > 2.0 ? 'dot-amber' : 'dot-green'}"></span>US 社債スプレッド: ${fmt(cs,2)} — ${cs > 3.0 ? 'クレジットストレス' : cs > 2.0 ? 'やや拡大' : '平常'}</div>
+    <div class="summary-item"><span class="summary-dot ${jt > 0 ? 'dot-green' : 'dot-red'}"></span>日本: 長短金利差 ${fmt(jt,2)}（${jt > 0 ? '順' : '逆'}イールド）</div>
+    <div class="summary-item"><span class="summary-dot" style="background:var(--blue)"></span>USD/JPY: ${D.usdjpy} ｜ 期待インフレ: ${be.toFixed(2)}%</div>`;
+
+  document.getElementById('dataCount').textContent =
+    `${D.history.termSpread.dates.length.toLocaleString()}点 (T10Y2Y)`;
+
+  // Build/rebuild charts
+  buildCharts();
+
+  document.getElementById('statusText').textContent = '✓ データ反映完了';
+  document.getElementById('pollStatus').textContent = '✓ 稼働中';
+}
+
+// ═══════════════════════════════════
+// CHART.JS
+// ═══════════════════════════════════
+Chart.defaults.color = '#9aa0b0';
+Chart.defaults.borderColor = '#2d3248';
+
+function buildCharts() {
+  if (!KINRI) return;
+
+  const H = KINRI.history;
+
+  buildChart('termChart', 'term', H.termSpread, '#60a5fa', 'year');
+  buildChart('creditChart', 'credit', H.creditSpread, '#34d399', 'year');
+  buildChart('jpChart', 'jp', H.jp10, '#fbbf24', 'month');
+}
+
+function getDateRangeFor(prefix, fullDates) {
+  const active = document.querySelector(`#${prefix}Controls .active`);
+  const range = active ? active.dataset.range : '5y';
+  const fromInput = document.getElementById(prefix + 'From').value;
+  const toInput = document.getElementById(prefix + 'To').value;
+
+  let min = null, max = null;
+
+  if (fromInput) min = new Date(fromInput + 'T00:00:00');
+  if (toInput) max = new Date(toInput + 'T23:59:59');
+
+  if (range !== 'all' && !fromInput && !toInput) {
+    const r = dateRange(range);
+    min = r.start;
+    max = r.end;
+  }
+
+  // Apply to full dates and filter
+  const allDates = fullDates.map(d => new Date(d + 'T00:00:00'));
+  let filteredDates = allDates;
+  if (min) filteredDates = filteredDates.filter(d => d >= min);
+  if (max) filteredDates = filteredDates.filter(d => d <= max);
+
+  // Convert filtered dates to timestamps and get indices
+  const filteredIndices = [];
+  const filteredTimestamps = [];
+  for (let i = 0; i < allDates.length; i++) {
+    if ((!min || allDates[i] >= min) && (!max || allDates[i] <= max)) {
+      filteredIndices.push(i);
+      filteredTimestamps.push(allDates[i].getTime());
+    }
+  }
+  return { indices: filteredIndices, timestamps: filteredTimestamps };
+}
+
+function buildChart(canvasId, prefix, data, color, unit) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  const existingCharts = charts;
+  if (existingCharts[prefix]) {
+    existingCharts[prefix].destroy();
+  }
+
+  const { indices, timestamps } = getDateRangeFor(prefix, data.dates);
+  const filteredValues = indices.map(i => data.values[i]);
+
+  const ch = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [{
+        data: timestamps.map((t, i) => ({ x: t, y: filteredValues[i] })),
+        borderColor: color,
+        backgroundColor: color + '22',
+        borderWidth: 1.2,
+        pointRadius: 0,
+        pointHitRadius: 4,
+        fill: true,
+        tension: 0.1,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1d28', titleColor: '#e8eaed', bodyColor: '#e8eaed',
+          borderColor: '#2d3248', borderWidth: 1, padding: 10, displayColors: false,
+          callbacks: {
+            title: items => new Date(items[0].parsed.x).toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' }),
+            label: item => ' ' + item.parsed.y.toFixed(2) + '%',
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: unit, displayFormats: unit === 'month' ? { year:'yyyy' } : { month:'yyyy/MM' } },
+          ticks: { maxTicksLimit: 12, color: '#6b7280', font: { size: 10 } },
+          grid: { color: '#1a1d28' },
+        },
+        y: {
+          ticks: { color: '#6b7280', font: { size: 10 }, callback: v => v + '%' },
+          grid: { color: '#1a1d28' },
+        }
+      }
+    }
+  });
+
+  charts[prefix] = ch;
+}
+
+// ═══════════════════════════════════
+// フィルター操作
+// ═══════════════════════════════════
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.chart-controls button');
+  if (!btn) return;
+  const parent = btn.closest('.chart-controls');
+  parent.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Clear custom date inputs
+  const prefix = parent.id.replace('Controls', '');
+  document.getElementById(prefix + 'From').value = '';
+  document.getElementById(prefix + 'To').value = '';
+  buildCharts();
+});
+
+document.querySelectorAll('input[type="date"]').forEach(input => {
+  input.addEventListener('change', () => {
+    const prefix = input.id.replace('From','').replace('To','');
+    // Deactivate preset buttons
+    const parent = document.getElementById(prefix + 'Controls');
+    parent.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    buildCharts();
+  });
+});
+
+// ═══════════════════════════════════
+// 自動更新ポーリング
+// ═══════════════════════════════════
+function manualRefresh() {
+  document.getElementById('statusText').textContent = '🔄 更新中...';
+  document.getElementById('pollStatus').textContent = '🔄 ポーリング中';
+  loadData(updateAll);
+}
+
+// Auto-poll every 5 minutes
+setInterval(() => {
+  manualRefresh();
+}, 5 * 60 * 1000);
+
+// ═══════════════════════════════════
+// 起動
+// ═══════════════════════════════════
+loadData(updateAll);
+</script>
+</body>
+</html>
