@@ -77,16 +77,39 @@
   <!-- ═══ 景気の四季 ═══ -->
   <div class="card">
     <div class="card-title">🗾 景気の四季 <span class="badge badge-daily">現在地</span></div>
-    <div id="seasonDisplay" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-      <div style="font-size:48px;line-height:1" id="seasonEmoji">🍂</div>
-      <div>
-        <div style="font-size:18px;font-weight:600" id="seasonName">—</div>
-        <div style="font-size:13px;color:var(--ink-secondary);margin-top:4px" id="seasonDesc">—</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:16px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <span style="font-size:14px;font-weight:600;color:var(--ink-secondary)">🇺🇸 アメリカ</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:36px;line-height:1" id="usSeasonEmoji">—</span>
+          <div>
+            <div style="font-size:16px;font-weight:600" id="usSeasonName">—</div>
+            <div style="font-size:11px;color:var(--ink-muted);margin-top:2px" id="usSeasonDesc">—</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--ink-muted);flex-wrap:wrap;">
+          <span>長短金利差 <span id="usSeasonTS">—</span></span>
+          <span>社債スプレッド <span id="usSeasonCS">—</span></span>
+          <span>景気後退 <span id="usSeasonRec">—</span></span>
+        </div>
       </div>
-      <div style="margin-left:auto;text-align:right;font-size:11px;color:var(--ink-muted)">
-        <div>長短金利差 <span id="seasonTS">—</span></div>
-        <div>社債スプレッド <span id="seasonCS">—</span></div>
-        <div>景気後退 <span id="seasonRec">—</span></div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:16px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <span style="font-size:14px;font-weight:600;color:var(--ink-secondary)">🇯🇵 日本</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:36px;line-height:1" id="jpSeasonEmoji">—</span>
+          <div>
+            <div style="font-size:16px;font-weight:600" id="jpSeasonName">—</div>
+            <div style="font-size:11px;color:var(--ink-muted);margin-top:2px" id="jpSeasonDesc">—</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--ink-muted);flex-wrap:wrap;">
+          <span>長短金利差 <span id="jpSeasonTS">—</span></span>
+          <span>景気後退 <span id="jpSeasonRec">—</span></span>
+        </div>
       </div>
     </div>
   </div>
@@ -286,37 +309,49 @@ function updateAll() {
     `${D.history.termSpread.dates.length.toLocaleString()}点 (T10Y2Y)`;
 
   // ── 景気の四季 ──
-  const usrec = D.history.usrec;
-  let inRecession = false;
-  if (usrec && usrec.dates) {
-    const todayStr = D.updated;
-    for (let i = usrec.dates.length - 1; i >= 0; i--) {
-      if (usrec.dates[i] <= todayStr) {
-        inRecession = usrec.values[i] === 1;
-        break;
+  function judgeSeason(prefix, spread, creditSpread, recData, todayStr) {
+    let inRecession = false;
+    if (recData && recData.dates) {
+      for (let i = recData.dates.length - 1; i >= 0; i--) {
+        if (recData.dates[i] <= todayStr) {
+          inRecession = recData.values[i] === 1;
+          break;
+        }
       }
     }
-  }
-  let seasonEmoji, seasonName, seasonDesc;
-  if (inRecession || ts < 0) {
-    seasonEmoji = '❄️'; seasonName = '冬'; seasonDesc = '景気後退局面。金利低下・逆イールド。';
-  } else if (ts < 0.5) {
-    if (cs > 2.0) {
-      seasonEmoji = '🍂'; seasonName = '秋（警戒）'; seasonDesc = 'フラット化＋社債拡大。クレジットリスクに注意。';
+    let emoji, name, desc;
+    if (inRecession || spread < 0) {
+      emoji = '❄️'; name = '冬'; desc = '景気後退局面。金利低下・逆イールド。';
+    } else if (spread < 0.5) {
+      if (creditSpread != null && creditSpread > 2.0) {
+        emoji = '🍂'; name = '秋（警戒）'; desc = 'フラット化＋社債拡大。クレジットリスクに注意。';
+      } else {
+        emoji = '🌾'; name = '秋'; desc = 'サイクル後期。イールドフラット。転換点を注視。';
+      }
+    } else if (spread < 1.5) {
+      emoji = '☀️'; name = '夏'; desc = '景気拡大期。順イールド。';
     } else {
-      seasonEmoji = '🌾'; seasonName = '秋'; seasonDesc = 'サイクル後期。イールドフラット。転換点を注視。';
+      emoji = '🌸'; name = '春'; desc = '回復期。スティープカーブ。低金利からの立ち上がり。';
     }
-  } else if (ts < 1.5) {
-    seasonEmoji = '☀️'; seasonName = '夏'; seasonDesc = '景気拡大期。順イールド。金利は中位。';
-  } else {
-    seasonEmoji = '🌸'; seasonName = '春'; seasonDesc = '回復期。スティープカーブ。低金利からの立ち上がり。';
+    return { emoji, name, desc, inRecession };
   }
-  document.getElementById('seasonEmoji').textContent = seasonEmoji;
-  document.getElementById('seasonName').textContent = seasonName;
-  document.getElementById('seasonDesc').textContent = seasonDesc;
-  document.getElementById('seasonTS').textContent = fmt(ts,2) + '%';
-  document.getElementById('seasonCS').textContent = fmt(cs,2) + '%';
-  document.getElementById('seasonRec').textContent = inRecession ? '⚠ 後退中' : '✓ 拡大中';
+
+  const todayStr = D.updated;
+  const usSeason = judgeSeason('us', ts, cs, D.history.usrec, todayStr);
+  document.getElementById('usSeasonEmoji').textContent = usSeason.emoji;
+  document.getElementById('usSeasonName').textContent = usSeason.name;
+  document.getElementById('usSeasonDesc').textContent = usSeason.desc;
+  document.getElementById('usSeasonTS').textContent = fmt(ts,2) + '%';
+  document.getElementById('usSeasonCS').textContent = fmt(cs,2) + '%';
+  document.getElementById('usSeasonRec').textContent = usSeason.inRecession ? '⚠ 後退中' : '✓ 拡大中';
+
+  const jpTerm = j10 - jc;
+  const jpSeason = judgeSeason('jp', jpTerm, null, D.history.jpnrec, todayStr);
+  document.getElementById('jpSeasonEmoji').textContent = jpSeason.emoji;
+  document.getElementById('jpSeasonName').textContent = jpSeason.name;
+  document.getElementById('jpSeasonDesc').textContent = jpSeason.desc;
+  document.getElementById('jpSeasonTS').textContent = fmt(jpTerm,2) + '%';
+  document.getElementById('jpSeasonRec').textContent = jpSeason.inRecession ? '⚠ 後退中' : '✓ 拡大中';
 
   // Build/rebuild charts
   buildCharts();
@@ -333,12 +368,10 @@ Chart.defaults.borderColor = '#2d3248';
 
 function buildCharts() {
   if (!KINRI) return;
-
   const H = KINRI.history;
-
-  buildChart('termChart', 'term', H.termSpread, '#60a5fa', 'year');
-  buildChart('creditChart', 'credit', H.creditSpread, '#34d399', 'year');
-  buildChart('jpChart', 'jp', H.jp10, '#fbbf24', 'month');
+  buildChart('termChart', 'term', H.termSpread, '#60a5fa', 'year', H.usrec);
+  buildChart('creditChart', 'credit', H.creditSpread, '#34d399', 'year', H.usrec);
+  buildChart('jpChart', 'jp', H.jp10, '#fbbf24', 'month', H.jpnrec);
 }
 
 function getDateRangeFor(prefix, fullDates) {
@@ -346,25 +379,14 @@ function getDateRangeFor(prefix, fullDates) {
   const range = active ? active.dataset.range : '5y';
   const fromInput = document.getElementById(prefix + 'From').value;
   const toInput = document.getElementById(prefix + 'To').value;
-
   let min = null, max = null;
-
   if (fromInput) min = new Date(fromInput + 'T00:00:00');
   if (toInput) max = new Date(toInput + 'T23:59:59');
-
   if (range !== 'all' && !fromInput && !toInput) {
     const r = dateRange(range);
-    min = r.start;
-    max = r.end;
+    min = r.start; max = r.end;
   }
-
-  // Apply to full dates and filter
   const allDates = fullDates.map(d => new Date(d + 'T00:00:00'));
-  let filteredDates = allDates;
-  if (min) filteredDates = filteredDates.filter(d => d >= min);
-  if (max) filteredDates = filteredDates.filter(d => d <= max);
-
-  // Convert filtered dates to timestamps and get indices
   const filteredIndices = [];
   const filteredTimestamps = [];
   for (let i = 0; i < allDates.length; i++) {
@@ -376,34 +398,24 @@ function getDateRangeFor(prefix, fullDates) {
   return { indices: filteredIndices, timestamps: filteredTimestamps };
 }
 
-function buildChart(canvasId, prefix, data, color, unit) {
+function buildChart(canvasId, prefix, data, color, unit, recData) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
-  const existingCharts = charts;
-  if (existingCharts[prefix]) {
-    existingCharts[prefix].destroy();
-  }
-
+  if (charts[prefix]) { charts[prefix].destroy(); }
   const { indices, timestamps } = getDateRangeFor(prefix, data.dates);
   const filteredValues = indices.map(i => data.values[i]);
-
   const ch = new Chart(ctx, {
     type: 'line',
     data: {
       datasets: [{
         data: timestamps.map((t, i) => ({ x: t, y: filteredValues[i] })),
-        borderColor: color,
-        backgroundColor: color + '22',
-        borderWidth: 1.2,
-        pointRadius: 0,
-        pointHitRadius: 4,
-        fill: true,
-        tension: 0.1,
+        borderColor: color, backgroundColor: color + '22',
+        borderWidth: 1.2, pointRadius: 0, pointHitRadius: 4,
+        fill: true, tension: 0.1,
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
@@ -428,21 +440,21 @@ function buildChart(canvasId, prefix, data, color, unit) {
           grid: { color: '#1a1d28' },
         }
       }
-      },
-      plugins: [{
+    },
+    plugins: [{
       id: 'recessionBands',
       afterDraw: function(chart) {
-        const usrec = KINRI && KINRI.history && KINRI.history.usrec;
-        if (!usrec || !usrec.dates || chart.scales.x.min === undefined) return;
+        const rec = recData || (KINRI && KINRI.history && KINRI.history.usrec);
+        if (!rec || !rec.dates || chart.scales.x.min === undefined) return;
         const ctx = chart.ctx;
         const xScale = chart.scales.x;
         const yScale = chart.scales.y;
         const visMin = xScale.min;
         const visMax = xScale.max;
         let recStart = null;
-        for (let i = 0; i < usrec.dates.length; i++) {
-          const d = new Date(usrec.dates[i] + 'T00:00:00').getTime();
-          if (usrec.values[i] === 1) {
+        for (let i = 0; i < rec.dates.length; i++) {
+          const d = new Date(rec.dates[i] + 'T00:00:00').getTime();
+          if (rec.values[i] === 1) {
             if (recStart === null) recStart = d;
           } else {
             if (recStart !== null) {
@@ -458,10 +470,9 @@ function buildChart(canvasId, prefix, data, color, unit) {
           }
         }
       }
-      }]
-      });
-
-      charts[prefix] = ch;
+    }]
+  });
+  charts[prefix] = ch;
 }
 
 // ═══════════════════════════════════
