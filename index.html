@@ -74,6 +74,38 @@
     </div>
   </div>
 
+  <!-- ═══ 見方ガイド（折りたたみ） ═══ -->
+  <div class="card" style="padding:12px 20px;">
+    <div onclick="const n=this.nextElementSibling; n.style.display=n.style.display==='none'?'block':'none'; this.querySelector('.arrow').textContent=n.style.display==='block'?'▽':'▶'" style="cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-secondary);user-select:none;">
+      <span class="arrow">▶</span> 💡 投資初心者のための見方
+    </div>
+    <div style="display:none;margin-top:12px;font-size:12px;line-height:1.7;color:var(--ink-secondary);">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;">
+          <div style="font-weight:600;color:var(--ink);margin-bottom:4px;">📏 長短金利差</div>
+          <div><span style="color:var(--blue);font-weight:600;">10年</span> − <span style="color:var(--amber);font-weight:600;">2年</span> の国債利回りの差。</div>
+          <div style="margin-top:4px;">✅ <b>プラス</b> = 銀行が融資しやすい＝経済正常</div>
+          <div style="color:var(--red);">❌ <b>マイナス</b>（逆イールド）＝ 過去のリセッション全てで発生した警告サイン</div>
+          <div style="margin-top:4px;color:var(--ink-muted);font-size:11px;">🔑 投資への影響：逆イールド出現→1〜2年後に株価下落の可能性</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;">
+          <div style="font-weight:600;color:var(--ink);margin-bottom:4px;">📊 社債スプレッド</div>
+          <div>企業が借りる金利 − 国が借りる金利。この差が「信用リスク」の値段。</div>
+          <div style="margin-top:4px;">✅ <b>狭い</b> = 企業の信用力に問題なし＝経済健全</div>
+          <div style="color:var(--red);">❌ <b>広がる</b> = 企業の資金繰りが圧迫＝景気悪化の前触れ</div>
+          <div style="margin-top:4px;color:var(--ink-muted);font-size:11px;">🔑 投資への影響：3%超でクレジットストレス。リスク資産の引き時。</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;">
+          <div style="font-weight:600;color:var(--ink);margin-bottom:4px;">🗾 景気の四季</div>
+          <div>この2つの指標で「今が景気サイクルのどの位置か」を季節に例えたもの。</div>
+          <div style="margin-top:4px;">🌸春＝回復期（買い場） ☀️夏＝拡大期（ホールド）<br>🌾秋＝後期（警戒） ❄️冬＝後退期（安全志向）</div>
+          <div style="margin-top:4px;color:var(--ink-muted);font-size:11px;">🔑 投資への影響：四季に合わせて戦略を変えると長期リターンが安定する。</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink-muted);">📖 詳しくは堀井正孝『金利を見れば投資はうまくいく』</div>
+    </div>
+  </div>
+
   <!-- ═══ 景気の四季 ═══ -->
   <div class="card">
     <div class="card-title">🗾 景気の四季 <span class="badge badge-daily">現在地</span></div>
