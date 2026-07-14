@@ -76,33 +76,111 @@
 
   <!-- ═══ 見方ガイド（折りたたみ） ═══ -->
   <div class="card" style="padding:12px 20px;">
-    <div onclick="const n=this.nextElementSibling; n.style.display=n.style.display==='none'?'block':'none'; this.querySelector('.arrow').textContent=n.style.display==='block'?'▽':'▶'" style="cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-secondary);user-select:none;">
-      <span class="arrow">▶</span> 💡 投資初心者のための見方
+    <div onclick="const n=this.nextElementSibling; const a=this.querySelector('.arrow'); if(n.style.display==='none'||!n.style.display){n.style.display='block';a.textContent='▽';}else{n.style.display='none';a.textContent='▶';}" style="cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-secondary);user-select:none;">
+      <span class="arrow">▶</span> 💡 投資初心者のための詳しい見方
     </div>
-    <div style="display:none;margin-top:12px;font-size:12px;line-height:1.7;color:var(--ink-secondary);">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;">
-          <div style="font-weight:600;color:var(--ink);margin-bottom:4px;">📏 長短金利差</div>
-          <div><span style="color:var(--blue);font-weight:600;">10年</span> − <span style="color:var(--amber);font-weight:600;">2年</span> の国債利回りの差。</div>
-          <div style="margin-top:4px;">✅ <b>プラス</b> = 銀行が融資しやすい＝経済正常</div>
-          <div style="color:var(--red);">❌ <b>マイナス</b>（逆イールド）＝ 過去のリセッション全てで発生した警告サイン</div>
-          <div style="margin-top:4px;color:var(--ink-muted);font-size:11px;">🔑 投資への影響：逆イールド出現→1〜2年後に株価下落の可能性</div>
+    <div style="display:none;margin-top:12px;font-size:12px;line-height:1.8;color:var(--ink-secondary);">
+
+      <!-- ─── 長短金利差 ─── -->
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;">
+        <div style="font-weight:700;color:var(--ink);font-size:14px;margin-bottom:6px;">📏 長短金利差（イールドカーブ）とは</div>
+        <div style="margin-bottom:8px;">
+          <b>10年国債利回り − 2年国債利回り</b> の差。銀行が「短期でお金を借りて、長期で貸す」ビジネスが成立するかどうかを示す、<b>経済の体温計</b>です。
         </div>
-        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;">
-          <div style="font-weight:600;color:var(--ink);margin-bottom:4px;">📊 社債スプレッド</div>
-          <div>企業が借りる金利 − 国が借りる金利。この差が「信用リスク」の値段。</div>
-          <div style="margin-top:4px;">✅ <b>狭い</b> = 企業の信用力に問題なし＝経済健全</div>
-          <div style="color:var(--red);">❌ <b>広がる</b> = 企業の資金繰りが圧迫＝景気悪化の前触れ</div>
-          <div style="margin-top:4px;color:var(--ink-muted);font-size:11px;">🔑 投資への影響：3%超でクレジットストレス。リスク資産の引き時。</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div style="background:var(--surface);border-radius:6px;padding:10px;border-left:3px solid var(--green);">
+            <div style="font-weight:600;color:var(--green);font-size:13px;">📈 スティープ（＋1.5%超）</div>
+            <div style="margin-top:4px;font-size:11px;">景気回復の初期。将来の成長を織り込み中。<br><b>→ 株式に強気</b></div>
+          </div>
+          <div style="background:var(--surface);border-radius:6px;padding:10px;border-left:3px solid var(--blue);">
+            <div style="font-weight:600;color:var(--blue);font-size:13px;">📊 順イールド（＋0.5〜1.5%）</div>
+            <div style="margin-top:4px;font-size:11px;">正常な拡大局面。経済は順調。<br><b>→ 株式ホールド</b></div>
+          </div>
+          <div style="background:var(--surface);border-radius:6px;padding:10px;border-left:3px solid var(--amber);">
+            <div style="font-weight:600;color:var(--amber);font-size:13px;">📉 フラット（＋0〜0.5%）</div>
+            <div style="margin-top:4px;font-size:11px;">拡大の終盤。当局の利上げが効いてきた。<br><b>→ やや慎重に</b></div>
+          </div>
         </div>
-        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;">
-          <div style="font-weight:600;color:var(--ink);margin-bottom:4px;">🗾 景気の四季</div>
-          <div>この2つの指標で「今が景気サイクルのどの位置か」を季節に例えたもの。</div>
-          <div style="margin-top:4px;">🌸春＝回復期（買い場） ☀️夏＝拡大期（ホールド）<br>🌾秋＝後期（警戒） ❄️冬＝後退期（安全志向）</div>
-          <div style="margin-top:4px;color:var(--ink-muted);font-size:11px;">🔑 投資への影響：四季に合わせて戦略を変えると長期リターンが安定する。</div>
+        <div style="background:var(--surface);border-radius:6px;padding:10px;margin-bottom:8px;border-left:3px solid var(--red);">
+          <div style="font-weight:600;color:var(--red);font-size:13px;">⚠ 逆イールド（マイナス）</div>
+          <div style="margin-top:4px;font-size:11px;">
+            短期金利が長期金利より高い異常事態。市場が「将来の利下げ＝景気悪化」を織り込んでいる証拠。
+            <b>過去50年、米国のリセッションは全て逆イールドが先行</b>（その後1〜2年で発生）。
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--ink-muted);border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+          <b>📌 グラフの見方：</b>青い線が0%を下回ると逆イールド。赤い帯は実際の景気後退期。<b>逆イールド後も株価はしばらく上がり続けることが多い</b>（タイミング予測は難しい）。逆イールドが解消され始めた頃が実際のピークに近い。
         </div>
       </div>
-      <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--ink-muted);">📖 詳しくは堀井正孝『金利を見れば投資はうまくいく』</div>
+
+      <!-- ─── 社債スプレッド ─── -->
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;">
+        <div style="font-weight:700;color:var(--ink);font-size:14px;margin-bottom:6px;">📊 社債スプレッド（信用サイクル）とは</div>
+        <div style="margin-bottom:8px;">
+          <b>企業が借りる金利 − 国が借りる金利。</b>この差が <b>「信用リスクの値段」</b>。企業のデフォルト（倒産）リスクを市場がどう評価しているかを示します。
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div style="background:var(--surface);border-radius:6px;padding:10px;border-left:3px solid var(--green);">
+            <div style="font-weight:600;color:var(--green);font-size:13px;">✅ 1.5%未満</div>
+            <div style="margin-top:4px;font-size:11px;">信用環境は良好。企業は低コストで資金調達でき、設備投資や雇用を増やせる。リスク資産に追い風。</div>
+          </div>
+          <div style="background:var(--surface);border-radius:6px;padding:10px;border-left:3px solid var(--amber);">
+            <div style="font-weight:600;color:var(--amber);font-size:13px;">⚠ 2〜3%</div>
+            <div style="margin-top:4px;font-size:11px;">やや拡大。クレジット市場に緊張が走り始めている。高レバレッジ企業の資金繰りに注意が必要な領域。</div>
+          </div>
+        </div>
+        <div style="background:var(--surface);border-radius:6px;padding:10px;margin-bottom:8px;border-left:3px solid var(--red);">
+          <div style="font-weight:600;color:var(--red);font-size:13px;">❌ 3%超</div>
+          <div style="margin-top:4px;font-size:11px;">
+            <b>クレジットストレス</b>。市場が企業のデフォルトを懸念。銀行が融資を引き締め→企業倒産→雇用悪化の悪循環に陥るシグナル。
+            2008年リーマンショック時は5%超、2020年コロナ時は4.5%超まで急拡大した。
+            <b>株式などのリスク資産からの資金引き時。</b>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--ink-muted);border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+          <b>📌 グラフの見方：</b>緑の線が上がると企業の資金調達環境が悪化している証拠。長短金利差と組み合わせて見ると精度が高い——<b>金利差がフラット＆社債スプレッド拡大</b>が最も警戒すべき組み合わせ。
+        </div>
+      </div>
+
+      <!-- ─── 四季 ─── -->
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;">
+        <div style="font-weight:700;color:var(--ink);font-size:14px;margin-bottom:6px;">🗾 景気の四季とは</div>
+        <div style="margin-bottom:8px;">
+          長短金利差と社債スプレッドの2つを組み合わせると、<b>今の景気サイクルが「春夏秋冬」のどの位置にあるか</b>が読み解けます。季節ごとに有効な投資戦略が変わります。
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div style="background:var(--surface);border-radius:6px;padding:10px;">
+            <div style="font-weight:600;font-size:13px;">🌸 春（回復期）</div>
+            <div style="margin-top:2px;font-size:11px;color:var(--green);">スティープカーブ + 低金利</div>
+            <div style="margin-top:4px;font-size:11px;">不況の底から這い上がる時期。金利は低く、カーブは急。企業収益は改善し始める。<br><b>→ 株式に積極投資。値上がり益を狙う。</b></div>
+          </div>
+          <div style="background:var(--surface);border-radius:6px;padding:10px;">
+            <div style="font-weight:600;font-size:13px;">☀️ 夏（拡大期）</div>
+            <div style="margin-top:2px;font-size:11px;color:var(--blue);">順イールド + 社債スプレッド低位</div>
+            <div style="margin-top:4px;font-size:11px;">景気は絶好調。雇用も所得も伸びる。ただし金利は徐々に上昇。<br><b>→ 株式ホールド。利益確定も検討。</b></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div style="background:var(--surface);border-radius:6px;padding:10px;border-left:3px solid var(--amber);">
+            <div style="font-weight:600;font-size:13px;color:var(--amber);">🌾 秋（後期）</div>
+            <div style="margin-top:2px;font-size:11px;color:var(--amber);">フラット + 社債スプレッド上昇傾向</div>
+            <div style="margin-top:4px;font-size:11px;">好景気のピークが近い。金利が高止まりし、クレジットリスクが顕在化し始める。ここから逆イールドへの転換点。<br><b>→ リスク資産を減らし、現金や短期債の比率を高める。</b></div>
+          </div>
+          <div style="background:var(--surface);border-radius:6px;padding:10px;border-left:3px solid var(--red);">
+            <div style="font-weight:600;font-size:13px;color:var(--red);">❄️ 冬（後退期）</div>
+            <div style="margin-top:2px;font-size:11px;color:var(--red);">逆イールド + 社債スプレッド拡大</div>
+            <div style="margin-top:4px;font-size:11px;">景気後退。株式下落、企業倒産増加。FRBは利下げに転じる。<br><b>→ 安全資産へ逃避。国債・金・現金。春が来るのを待つ。</b></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--ink-muted);border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+          <b>📌 四季のサイクル：</b>🌸春→☀️夏→🌾秋→❄️冬→🌸春… このサイクルを理解すれば「今は買い時か、待つ時か」の判断材料になる。<b>全ての投資家は四季に逆らえない。季節に合わせて服装を変えるように、投資戦略も変える。</b>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px;font-size:11px;color:var(--ink-muted);line-height:1.6;">
+        <b>⚠ 注意：</b>これらの指標は<b>確実な予測ツールではありません。</b>過去のパターンを示す参考指標であり、投資判断は自己責任で行ってください。本書『金利を見れば投資はうまくいく』（堀井正孝）では、さらに詳しく実践的な活用法が解説されています。
+      </div>
+
     </div>
   </div>
 
